@@ -1,6 +1,5 @@
 import {
   createSolanaDevnet,
-  createSolanaLocalnet,
   createWalletUiConfig,
   WalletUi,
 } from "@wallet-ui/react";
@@ -20,8 +19,10 @@ export const ClusterButton = dynamic(
   }
 );
 
+// Using devnet by default. To add localnet, import createSolanaLocalnet and add it to the clusters array,
+// then start the validator with: bun run anchor-localnet
 const config = createWalletUiConfig({
-  clusters: [createSolanaDevnet(), createSolanaLocalnet()],
+  clusters: [createSolanaDevnet()],
 });
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
