@@ -335,7 +335,8 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
     isLoading,
   } = useOffersPaginated(accountsAddress);
 
-  const isFetching = isOfferFetching || addressesLoading;
+  // Only show loading if we don't have any cached data
+  const isFetching = (isOfferFetching || addressesLoading) && !data;
 
   const [selectedOffer, setSelectedOffer] = useState<{
     pubkey: Address;
@@ -361,7 +362,8 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
     setDialogOpen(true);
   };
 
-  if (isLoading) {
+  // Show loading only if we have no data at all
+  if (isLoading && !data) {
     return (
       <Card className="border bg-card/50 backdrop-blur-sm">
         <CardContent className="p-12">

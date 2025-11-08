@@ -153,6 +153,8 @@ export function useProgramAccounts<TConfig extends RpcConfig = RpcConfig>({
       client.rpc
         .getProgramAccounts(program as Address, config)
         .send({ abortSignal }),
+    staleTime: 30_000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   return {
@@ -177,7 +179,7 @@ export function useProgramAccounts<TConfig extends RpcConfig = RpcConfig>({
 
 /** TODO: Refactor */
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50; // Increased from 20 to 50 for faster initial load
 
 export async function fetchOffersPage(
   rpc: Rpc<SolanaRpcApi>,
@@ -190,8 +192,13 @@ export async function fetchOffersPage(
 
   // Get the subset of addresses for this page
   const pageAddresses = addresses.slice(start, end);
-  // Decode with Gill SDK
-  const decoded = await fetchAllOffer(rpc, pageAddresses ?? []);
+  
+  if (pageAddresses.length === 0) {
+    return [];
+  }
+  
+  // Decode with Gill SDK - fetchAllOffer should handle parallel fetching
+  const decoded = await fetchAllOffer(rpc, pageAddresses);
 
   return decoded.map((offer, i) => ({
     pubkey: pageAddresses[i],
@@ -203,7 +210,7 @@ export function useOffersPaginated(addresses: Address[]) {
   const { client, cluster } = useWalletUi();
 
   return useInfiniteQuery({
-    queryKey: QueryKeys.offersList(cluster),
+    queryKey: [...QueryKeys.offersList(cluster), addresses.length],
     queryFn: async ({ pageParam }) => {
       // pageParam is the "before" cursor
       const results = await fetchOffersPage(client.rpc, addresses, pageParam);
@@ -214,6 +221,9 @@ export function useOffersPaginated(addresses: Address[]) {
       return loadedCount < addresses.length ? allPages.length : undefined;
     },
     initialPageParam: 0,
+    enabled: addresses.length > 0,
+    staleTime: 30_000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 }
 
