@@ -33,12 +33,20 @@ export function NoirHeader() {
             Create Deal
           </Link>
           {account && (
-            <Link
-              className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-              href="/dashboard/my-deals"
-            >
-              My Deals
-            </Link>
+            <>
+              <Link
+                className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+                href="/dashboard/my-deals"
+              >
+                My Deals
+              </Link>
+              <Link
+                className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+                href="/profile"
+              >
+                My Profile
+              </Link>
+            </>
           )}
         </nav>
         <div className="flex items-center gap-2">
