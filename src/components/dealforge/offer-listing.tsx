@@ -3,6 +3,7 @@
 import { OFFER_DISCRIMINATOR, type Offer } from "@project/anchor";
 import { ellipsify, useWalletUi } from "@wallet-ui/react";
 import type { Account, Address, Base64EncodedBytes } from "gill";
+import { ArrowDown, ArrowRight, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExplorerLink } from "@/components/cluster/cluster-ui";
 import { Badge } from "@/components/ui/badge";
@@ -63,54 +64,76 @@ function OfferDetails({ offer, open, onOpenChange }: OfferDetailsProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="max-w-2xl"
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Offer Details</DialogTitle>
-              <DialogDescription>
-                Offer ID: {offerId.toString()}
+        <DialogHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-bold">Offer Details</DialogTitle>
+              <DialogDescription className="flex items-center gap-2">
+                <span className="text-muted-foreground">ID:</span>
+                <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono">
+                  {offerId.toString()}
+                </code>
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
-              {isOwner && <Badge variant="secondary">Your Offer</Badge>}
-            </div>
+            {isOwner && (
+              <Badge variant="secondary" className="text-xs font-medium">
+                Your Offer
+              </Badge>
+            )}
           </div>
         </DialogHeader>
+        
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Offered Token */}
+          {/* Token Exchange Display */}
+          <div className="space-y-4">
+            {/* Offered Token Pill */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-green-600">Offering</h3>
-              <div className="space-y-1">
-                <div className="font-bold text-2xl">
-                  {formatAmount(offer.account.data.offeredAmount)}
+              <div className="text-muted-foreground text-sm font-medium">
+                {isOwner ? "You're offering" : "They're offering"}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 border border-emerald-500/20">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="font-semibold text-base text-emerald-600 dark:text-emerald-400">
+                    {formatAmount(offer.account.data.offeredAmount)}
+                  </span>
                 </div>
-                <div className="text-gray-500 text-sm">
+                <div className="rounded-full bg-muted px-3 py-1.5">
                   <ExplorerLink
                     address={offer.account.data.offeredMint.toString()}
-                    label={ellipsify(offer.account.data.offeredMint.toString())}
+                    label={ellipsify(offer.account.data.offeredMint.toString(), 8)}
+                    className="font-mono text-muted-foreground text-xs"
                   />
+                  <ExternalLink className="ml-1.5 inline h-3 w-3" />
                 </div>
               </div>
             </div>
 
-            {/* Requested Token */}
+            {/* Arrow */}
+            <div className="flex items-center justify-center py-1">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" />
+            </div>
+
+            {/* Requested Token Pill */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-blue-600">Requesting</h3>
-              <div className="space-y-1">
-                <div className="font-bold text-2xl">
-                  {formatAmount(offer.account.data.requestedAmount)}
+              <div className="text-muted-foreground text-sm font-medium">In exchange for</div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-2 border border-blue-500/20">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="font-semibold text-base text-blue-600 dark:text-blue-400">
+                    {formatAmount(offer.account.data.requestedAmount)}
+                  </span>
                 </div>
-                <div className="text-gray-500 text-sm">
+                <div className="rounded-full bg-muted px-3 py-1.5">
                   <ExplorerLink
                     address={offer.account.data.requestedMint.toString()}
-                    label={ellipsify(
-                      offer.account.data.requestedMint.toString()
-                    )}
+                    label={ellipsify(offer.account.data.requestedMint.toString(), 8)}
+                    className="font-mono text-muted-foreground text-xs"
                   />
+                  <ExternalLink className="ml-1.5 inline h-3 w-3" />
                 </div>
               </div>
             </div>
@@ -120,33 +143,55 @@ function OfferDetails({ offer, open, onOpenChange }: OfferDetailsProps) {
 
           {/* Maker Information */}
           <div className="space-y-2">
-            <h3 className="font-semibold">Maker</h3>
-            <ExplorerLink
-              address={offer.account.data.maker.toString()}
-              label={ellipsify(offer.account.data.maker.toString())}
-            />
+            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+              Maker
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-muted px-3 py-1.5">
+                <ExplorerLink
+                  address={offer.account.data.maker.toString()}
+                  label={ellipsify(offer.account.data.maker.toString())}
+                  className="font-mono text-sm"
+                />
+                <ExternalLink className="ml-1.5 inline h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+            </div>
           </div>
 
           <Separator />
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             {isOwner ? (
               <Button
                 disabled={refundOfferMutation.isPending}
                 onClick={handleRefundOffer}
                 variant="destructive"
+                className="w-full sm:w-auto"
               >
-                {refundOfferMutation.isPending
-                  ? "Refunding..."
-                  : "Refund Offer"}
+                {refundOfferMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Refunding...
+                  </>
+                ) : (
+                  "Refund Offer"
+                )}
               </Button>
             ) : (
               <Button
                 disabled={takeOfferMutation.isPending}
                 onClick={handleTakeOffer}
+                className="w-full sm:w-auto"
               >
-                {takeOfferMutation.isPending ? "Taking Offer..." : "Take Offer"}
+                {takeOfferMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Taking Offer...
+                  </>
+                ) : (
+                  "Take Offer"
+                )}
               </Button>
             )}
           </div>
@@ -172,54 +217,77 @@ function OfferCard({ offer, onClick }: OfferCardProps) {
 
   return (
     <Card
-      className="min-w-[320px] cursor-pointer transition-colors hover:bg-muted/50"
+      className="group cursor-pointer border bg-card transition-all hover:border-primary/50 hover:shadow-md"
       onClick={onClick}
     >
-      <CardContent className="p-6">
-        <div className="space-y-5">
+      <CardContent className="p-4 sm:p-5">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Badge
-              className="text-xs"
+              className="rounded-full text-xs font-medium"
               variant={isOwner ? "secondary" : "outline"}
             >
               {isOwner
                 ? "Your Offer"
-                : `Offer #${offer.account.data.id.toString()}`}
+                : `#${offer.account.data.id.toString()}`}
             </Badge>
-            <span className="text-muted-foreground text-xs transition-colors hover:text-foreground">
-              View Details
-            </span>
+            <div className="flex items-center gap-1 text-muted-foreground text-xs transition-colors group-hover:text-foreground">
+              <span>View</span>
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="text-green-600">
-                <div className="font-semibold text-lg">
-                  {formatAmount(offer.account.data.offeredAmount)}
-                </div>
-                <div className="mt-1.5 text-muted-foreground text-xs">
-                  {ellipsify(offer.account.data.offeredMint.toString(), 8)}
-                </div>
+          <div className="flex flex-col gap-2">
+            {/* Offered Token Pill */}
+            <div className="space-y-1.5">
+              <div className="text-muted-foreground text-xs font-medium">
+                {isOwner ? "You're offering" : "They're offering"}
               </div>
-
-              <div className="my-4 flex justify-center">
-                <div className="text-muted-foreground text-sm">↓</div>
-              </div>
-
-              <div className="text-blue-600">
-                <div className="font-semibold text-lg">
-                  {formatAmount(offer.account.data.requestedAmount)}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 border border-emerald-500/20">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="font-semibold text-sm text-emerald-600 dark:text-emerald-400">
+                    {formatAmount(offer.account.data.offeredAmount)}
+                  </span>
                 </div>
-                <div className="mt-1.5 text-muted-foreground text-xs">
-                  {ellipsify(offer.account.data.requestedMint.toString(), 8)}
+                <div className="rounded-full bg-muted px-2.5 py-1">
+                  <span className="font-mono text-muted-foreground text-xs">
+                    {ellipsify(offer.account.data.offeredMint.toString(), 6)}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <Separator className="my-4" />
+            {/* Arrow */}
+            <div className="flex justify-center py-0.5">
+              <ArrowDown className="h-4 w-4 text-muted-foreground" />
+            </div>
 
-            <div className="text-muted-foreground text-xs">
-              Maker: {ellipsify(offer.account.data.maker.toString(), 8)}
+            {/* Requested Token Pill */}
+            <div className="space-y-1.5">
+              <div className="text-muted-foreground text-xs font-medium">In exchange for</div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1.5 border border-blue-500/20">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="font-semibold text-sm text-blue-600 dark:text-blue-400">
+                    {formatAmount(offer.account.data.requestedAmount)}
+                  </span>
+                </div>
+                <div className="rounded-full bg-muted px-2.5 py-1">
+                  <span className="font-mono text-muted-foreground text-xs">
+                    {ellipsify(offer.account.data.requestedMint.toString(), 6)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <span className="text-muted-foreground text-xs">Maker:</span>
+            <div className="rounded-full bg-muted px-2.5 py-0.5">
+              <span className="font-mono text-foreground text-xs">
+                {ellipsify(offer.account.data.maker.toString(), 6)}
+              </span>
             </div>
           </div>
         </div>
@@ -295,10 +363,16 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-8">
-          <div className="text-center">
-            <div className="text-muted-foreground">Loading offers...</div>
+      <Card className="border bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-12">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="text-center">
+              <div className="font-medium text-foreground">Loading offers...</div>
+              <div className="mt-1 text-muted-foreground text-sm">
+                Fetching from the blockchain
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -307,10 +381,10 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
 
   if (error) {
     return (
-      <Card>
+      <Card className="border-destructive/50 bg-destructive/5">
         <CardContent className="p-8">
           <div className="text-center">
-            <div className="text-destructive">Error loading offers</div>
+            <div className="font-semibold text-destructive">Error loading offers</div>
             <div className="mt-2 text-muted-foreground text-sm">
               {error instanceof Error ? error.message : "Unknown error"}
             </div>
@@ -322,10 +396,13 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
 
   if (allOffers.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8">
+      <Card className="border bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-12">
           <div className="text-center">
-            <div className="text-muted-foreground">No offers found</div>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <RefreshCw className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="font-semibold text-foreground">No offers found</div>
             <div className="mt-2 text-muted-foreground text-sm">
               Be the first to create an offer!
             </div>
@@ -336,8 +413,8 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {allOffers.map((offer) => (
           <OfferCard
             key={offer.pubkey.toString()}
@@ -348,19 +425,28 @@ export function OfferListing({ filterByMaker }: OfferListingProps = {}) {
       </div>
 
       {hasNextPage && (
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-4">
           <Button
             disabled={isFetchingNextPage}
             onClick={() => fetchNextPage()}
             variant="outline"
+            className="min-w-[160px]"
           >
-            {isFetchingNextPage ? "Loading more..." : "Load More Offers"}
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading more...
+              </>
+            ) : (
+              "Load More Offers"
+            )}
           </Button>
         </div>
       )}
 
       {isFetching && !isFetchingNextPage && (
-        <div className="flex justify-center">
+        <div className="flex items-center justify-center gap-2 py-4">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           <div className="text-muted-foreground text-sm">Refreshing...</div>
         </div>
       )}
