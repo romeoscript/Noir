@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { WalletButton } from "@/components/solana/solana-provider";
 import { ThemeSelect } from "@/components/theme-select";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ import {
 export function DealforgeHomePage() {
   const { account } = useWalletUi();
   const router = useRouter();
+  const walletButtonRef = useRef<HTMLDivElement>(null);
 
   // Redirect to dashboard if wallet is connected
   useEffect(() => {
@@ -30,6 +32,24 @@ export function DealforgeHomePage() {
       router.push("/dashboard");
     }
   }, [account, router]);
+
+  const handleConnectWallet = () => {
+    // Trigger click on the wallet button in the header
+    // Try multiple selectors to find the wallet button
+    const walletButton = walletButtonRef.current?.querySelector("button") ||
+      walletButtonRef.current?.querySelector("[data-slot='button']") ||
+      walletButtonRef.current?.querySelector(".wallet-adapter-button-trigger");
+    
+    if (walletButton) {
+      (walletButton as HTMLButtonElement).click();
+    } else {
+      // Fallback: try to find any button in the wallet button container
+      const buttons = walletButtonRef.current?.querySelectorAll("button");
+      if (buttons && buttons.length > 0) {
+        (buttons[0] as HTMLButtonElement).click();
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -46,7 +66,7 @@ export function DealforgeHomePage() {
             </div>
             <span className="font-semibold text-xl tracking-tight">Noir OTC</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" ref={walletButtonRef}>
             <ThemeSelect />
             <WalletButton />
           </div>
@@ -81,10 +101,14 @@ export function DealforgeHomePage() {
           </motion.p>
 
           {!account && (
-            <div className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+            <Button
+              onClick={handleConnectWallet}
+              className="group inline-flex items-center gap-2 rounded-lg border bg-card hover:bg-card/80 px-6 py-2 text-sm font-medium shadow-sm transition-all hover:shadow-md"
+              variant="outline"
+            >
               <span>Connect wallet to continue</span>
-              <ArrowRight className="h-4 w-4" />
-            </div>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
           )}
         </div>
       </section>
