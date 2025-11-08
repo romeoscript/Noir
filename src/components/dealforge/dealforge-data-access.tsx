@@ -327,12 +327,12 @@ export function useTakeOfferMutation() {
       // });
 
       const takerOfferedAta = await getAssociatedTokenAccountAddress(
-        requestedMint,
+        offeredMint,
         txSigner.address,
         TOKEN_2022_PROGRAM_ADDRESS
       );
       const takerRequestedAta = await getAssociatedTokenAccountAddress(
-        offeredMint,
+        requestedMint,
         txSigner.address,
         TOKEN_2022_PROGRAM_ADDRESS
       );
